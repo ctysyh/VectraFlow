@@ -28,6 +28,8 @@
   - [8. Concurrency \& Elasticity](#8-concurrency--elasticity)
     - [8.1 并行度模型](#81-并行度模型)
     - [8.2 资源弹性控制](#82-资源弹性控制)
+  - [9. User Interface](#9-user-interface)
+    - [9.1 TK Wrapper](#91-tk-wrapper)
 
 ---
 
@@ -294,3 +296,9 @@ CK 和 Host 通过 `host_message_buffer` 中的消息包来进行控制面交互
 *   缩容: 通知 CK 停止向特定 TK 追加 CSV，待其自然耗尽退出。
 *   扩容: 创建新的 TK 实例，并通知 CK 开始向其调度任务。
 *   此机制实现了手动但精细的硬件资源控制，可以精准控制硬件负载率。
+
+---
+
+## 9. User Interface
+
+### 9.1 TK Wrapper
