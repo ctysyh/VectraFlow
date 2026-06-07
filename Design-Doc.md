@@ -28,8 +28,9 @@
   - [8. Concurrency \& Elasticity](#8-concurrency--elasticity)
     - [8.1 并行度模型](#81-并行度模型)
     - [8.2 资源弹性控制](#82-资源弹性控制)
-  - [9. User Interface](#9-user-interface)
-    - [9.1 TK Wrapper](#91-tk-wrapper)
+  - [9. Engineering](#9-engineering)
+    - [9.1 CUDA](#91-cuda)
+    - [9.2 Metal](#92-metal)
 
 ---
 
@@ -95,7 +96,7 @@
     *   `csv_ref`: 指向当前执行该节点的 CSV 实例。
     *   `InputRoutingTable`: 输入数据块来源（来自哪些前置节点的哪些 CSV 字段）。按照数量 + 描述符 `InputDescriptor` 的形式，描述符字面顺序即布局顺序。
     *   `OutputAllocationTable`: 输出数据块需求（是否需要分配新空间）。类似地采用数量 + `OutputDescriptor` 的形式，描述符字面顺序即布局顺序。
-*   特别地，约定在描述符的排列中，必须按照 `InputSourceType` 或 `OutputAllocStrategy` 枚举值的顺序排列。
+*   特别地，约定在描述符的排列中，必须按照 `InputSourceType` 或 `OutputAllocStrategy` 枚举值的顺序排列，以减轻 CK 的指令发散。
 *   `InputDescriptor`: 对齐到 64 bits。
 ```
 // 输入来源类型枚举
@@ -299,6 +300,10 @@ CK 和 Host 通过 `host_message_buffer` 中的消息包来进行控制面交互
 
 ---
 
-## 9. User Interface
+## 9. Engineering
 
-### 9.1 TK Wrapper
+### 9.1 CUDA
+由于 CUDA 编程模型的限制，想要共享 SMEM/DSMEM，则必须将多个前文假设为独立 Kernel 的 TK 和 CK 组合成一个占满最大 CGA 尺寸的大型 Kernel。此时，TK 不再是独立的 Kernel，而只是逻辑分支，并通过条件分支和精确的同步范围来保持逻辑独立性；当 `next_csv` 为 `NULL` 时不退出，而是等待在 `mbarrier`上，避免损毁整个 Kernel。通过 DSMEM 指针和 `mbarrier`，CK 和 TK 的交互得以实现最大程度的高效。
+
+### 9.2 Metal
+Apple GPU 因为 UMA 的存在和 DSMEM 的缺失，性能特征与 CUDA 显著不同。TK 保持为独立 Kernel 和前文的正常退出逻辑，CK 则直接构造为 CPU 线程、不再由 GPU 执行。
